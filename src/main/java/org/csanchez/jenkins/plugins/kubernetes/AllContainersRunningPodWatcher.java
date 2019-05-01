@@ -67,6 +67,7 @@ public class AllContainersRunningPodWatcher implements Watcher<Pod> {
             return false;
         }
         List<ContainerStatus> containerStatuses = pod.getStatus().getContainerStatuses();
+        LOGGER.log(Level.INFO, "containerStatuses: {0}", new Object[] {containerStatuses});
         if (containerStatuses.isEmpty()) {
             return false;
         }
@@ -124,10 +125,16 @@ public class AllContainersRunningPodWatcher implements Watcher<Pod> {
         long started = System.currentTimeMillis();
         long alreadySpent = System.currentTimeMillis() - started;
         long remaining = timeUnit.toMillis(amount) - alreadySpent;
+        LOGGER.log(Level.INFO, "started: {0}", new Object[] {started});
+        LOGGER.log(Level.INFO, "alreadySpent: {0}", new Object[] {alreadySpent});
+        LOGGER.log(Level.INFO, "remaining: {0}", new Object[] {remaining});
+
         if (remaining <= 0) {
+            LOGGER.log(Level.INFO, "periodicAwait({0}, {1}, {2}, {3})", new Object[] {0, System.currentTimeMillis(), 0, 0});
             return periodicAwait(0, System.currentTimeMillis(), 0, 0);
         }
         try {
+            LOGGER.log(Level.INFO, "periodicAwait({0}, {1}, {2}, {3})", new Object[] {10, System.currentTimeMillis(), Math.max(remaining / 10, 1000L), remaining});
             return periodicAwait(10, System.currentTimeMillis(), Math.max(remaining / 10, 1000L), remaining);
         } catch (KubernetesClientTimeoutException e) {
             // Wrap using the right timeout
@@ -136,6 +143,7 @@ public class AllContainersRunningPodWatcher implements Watcher<Pod> {
     }
 
     private Pod awaitWatcher(long amount, TimeUnit timeUnit) {
+        LOGGER.log(Level.INFO, "waiting: {0}", new Object[] {amount});
         try {
             if (latch.await(amount, timeUnit)) {
                 return reference.get();
@@ -185,6 +193,7 @@ public class AllContainersRunningPodWatcher implements Watcher<Pod> {
 
         long remaining = (started + amount) - System.currentTimeMillis();
         long next = Math.max(0, Math.min(remaining, interval));
+        LOGGER.log(Level.INFO, "last remaining: {0}", new Object[] {remaining});
         return periodicAwait(i - 1, started, next, amount);
     }
 
